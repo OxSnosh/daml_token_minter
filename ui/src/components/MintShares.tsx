@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useLedger, useStreamQueries } from '@daml/react'
 import * as Instrument from '@daml.js/spcx-equity-1.0.0/lib/Equity/Instrument'
+import { useDisplayName } from '../PartiesContext'
 
 interface Props {
     issuer: string
@@ -8,6 +9,7 @@ interface Props {
 
 export default function MintShares({ issuer }: Props) {
     const ledger = useLedger()
+    const displayName = useDisplayName()
     const [ticker, setTicker] = useState('SPCX')
     const [recipient, setRecipient] = useState('')
     const [amount, setAmount] = useState('1000')
@@ -43,7 +45,7 @@ export default function MintShares({ issuer }: Props) {
                 amount: amt.toFixed(10),
                 allowlistCid: allowlistEntry.contractId,
             })
-            setStatus(`✓ Minted ${amt.toLocaleString()} ${ticker} shares to ${party}.`)
+            setStatus(`✓ Minted ${amt.toLocaleString()} ${ticker} shares to ${displayName(party)}.`)
         } catch (e: unknown) {
             setStatus(`Error: ${(e as Error).message}`)
         }
@@ -71,7 +73,7 @@ export default function MintShares({ issuer }: Props) {
                     <option value="">— select party —</option>
                     {allowlistedParties.map((p) => (
                         <option key={p} value={p}>
-                            {p}
+                            {displayName(p)}
                         </option>
                     ))}
                 </select>

@@ -74,3 +74,5 @@
 35. "i am getting this error now — HTTP 401 Unauthorized (json-api running but rejecting devToken)"
 
 36. "why am i getting this error when i click on create instrument? HTTP 401 Unauthorized" (root cause: token missing ledgerId claim; fixed by adding ledgerId: 'sandbox')
+
+37. "now i am getting this error when i see undefined: HTTP 400 Bad Request on create" (root cause: Canton parties Issuer/Alice/Bob were never allocated and use namespaced IDs like 'Issuer::1220…'; allocated parties via json-api and made the UI fetch real party IDs dynamically)

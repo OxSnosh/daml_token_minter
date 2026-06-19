@@ -1,12 +1,15 @@
 import React from 'react'
 import { useStreamQueries } from '@daml/react'
 import * as Instrument from '@daml.js/spcx-equity-1.0.0/lib/Equity/Instrument'
+import { useDisplayName } from '../PartiesContext'
 
 interface Props {
     party: string
 }
 
 export default function Holdings({ party }: Props) {
+    const displayName = useDisplayName()
+    const name = displayName(party)
     const { contracts, loading } = useStreamQueries(Instrument.EquityHolding)
 
     // Group holdings by ticker
@@ -18,10 +21,10 @@ export default function Holdings({ party }: Props) {
 
     return (
         <section className="card holdings-card">
-            <h2>Holdings — {party}</h2>
+            <h2>Holdings — {name}</h2>
             {loading && <p className="muted">Loading…</p>}
             {!loading && contracts.length === 0 && (
-                <p className="muted">No holdings found for {party}.</p>
+                <p className="muted">No holdings found for {name}.</p>
             )}
             {!loading && Object.keys(byTicker).length > 0 && (
                 <table>

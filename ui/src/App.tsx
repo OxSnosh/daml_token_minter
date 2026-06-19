@@ -1,10 +1,17 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import DamlLedger from '@daml/react'
 import Dashboard from './components/Dashboard'
+import { PartiesContext, PartyInfo } from './PartiesContext'
 
 // ---------------------------------------------------------------------------
-// Dev-mode token — works with: daml start (--allow-insecure-tokens, no sig check)
+// Dev-mode token — works with: daml json-api --allow-insecure-tokens
+// (signature is not verified, but the claim must carry the ledgerId and the
+//  full namespaced party identifier, e.g. "Issuer::1220abc…").
 // ---------------------------------------------------------------------------
+
+const LEDGER_ID = 'sandbox'
+// Use current origin so requests go through the Vite proxy → no CORS.
+const JSON_API_URL = window.location.origin + '/'
 
 function b64url(obj: object): string {
     return btoa(JSON.stringify(obj))
@@ -13,13 +20,13 @@ function b64url(obj: object): string {
         .replace(/=/g, '')
 }
 
-function devToken(party: string): string {
+function devToken(partyId: string): string {
     const header = b64url({ alg: 'HS256', typ: 'JWT' })
     const payload = b64url({
         'https://daml.com/ledger-api': {
-            ledgerId: 'sandbox',
-            actAs: [party],
-            readAs: [party],
+            ledgerId: LEDGER_ID,
+            actAs: [partyId],
+            readAs: [partyId],
             applicationId: 'spcx-app',
         },
     })
@@ -27,15 +34,69 @@ function devToken(party: string): string {
     return `${header}.${payload}.dev`
 }
 
-const KNOWN_PARTIES = ['Issuer', 'Alice', 'Bob']
-// Use current origin so requests go through Vite proxy → no CORS
-const JSON_API_URL = window.location.origin + '/'
+// Bootstrap token used only to list/allocate parties. The /v1/parties
+// endpoints accept any structurally valid token in dev mode.
+function bootstrapToken(): string {
+    return devToken('bootstrap')
+}
+
+// Parties the demo expects to exist on the ledger.
+const REQUIRED_PARTIES = ['Issuer', 'Alice', 'Bob']
+
+async function allocateParty(hint: string): Promise<void> {
+    await fetch(JSON_API_URL + 'v1/parties/allocate', {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${bootstrapToken()}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ identifierHint: hint, displayName: hint }),
+    })
+}
+
+async function loadParties(): Promise<PartyInfo[]> {
+    const res = await fetch(JSON_API_URL + 'v1/parties', {
+        headers: { Authorization: `Bearer ${bootstrapToken()}` },
+    })
+    const data = await res.json()
+    return (data.result ?? [])
+        .filter((p: { displayName?: string }) => !!p.displayName)
+        .map((p: { displayName: string; identifier: string }) => ({
+            displayName: p.displayName,
+            identifier: p.identifier,
+        }))
+}
 
 export default function App() {
+    const [parties, setParties] = useState<PartyInfo[]>([])
+    const [loadError, setLoadError] = useState('')
     const [party, setParty] = useState<string | null>(null)
     const [token, setToken] = useState('')
     const [customToken, setCustomToken] = useState('')
     const [useCustomToken, setUseCustomToken] = useState(false)
+
+    useEffect(() => {
+        ;(async () => {
+            try {
+                let list = await loadParties()
+                // Auto-allocate any missing demo parties so the app is
+                // self-bootstrapping after a fresh sandbox start.
+                const missing = REQUIRED_PARTIES.filter(
+                    (name) => !list.some((p) => p.displayName === name),
+                )
+                if (missing.length > 0) {
+                    await Promise.all(missing.map(allocateParty))
+                    list = await loadParties()
+                }
+                setParties(list)
+                if (list.length === 0) {
+                    setLoadError('No named parties found. Is the JSON API running on port 7575?')
+                }
+            } catch (e) {
+                setLoadError(`Could not load parties: ${(e as Error).message}`)
+            }
+        })()
+    }, [])
 
     if (!party) {
         return (
@@ -45,16 +106,17 @@ export default function App() {
                     <p className="subtitle">Canton Network — Tokenized Stock Demo</p>
 
                     <h2>Select a party</h2>
+                    {loadError && <p className="status">{loadError}</p>}
                     <div className="party-buttons">
-                        {KNOWN_PARTIES.map((p) => (
+                        {parties.map((p) => (
                             <button
-                                key={p}
+                                key={p.identifier}
                                 onClick={() => {
-                                    setToken(useCustomToken ? customToken : devToken(p))
-                                    setParty(p)
+                                    setToken(useCustomToken ? customToken : devToken(p.identifier))
+                                    setParty(p.identifier)
                                 }}
                             >
-                                {p}
+                                {p.displayName}
                             </button>
                         ))}
                     </div>
@@ -82,20 +144,18 @@ export default function App() {
     }
 
     return (
-        <DamlLedger
-            party={party}
-            token={token}
-            httpBaseUrl={JSON_API_URL}
-        >
-            <Dashboard
-                party={party}
-                onLogout={() => {
-                    setParty(null)
-                    setToken('')
-                    setUseCustomToken(false)
-                    setCustomToken('')
-                }}
-            />
-        </DamlLedger>
+        <PartiesContext.Provider value={parties}>
+            <DamlLedger party={party} token={token} httpBaseUrl={JSON_API_URL}>
+                <Dashboard
+                    party={party}
+                    onLogout={() => {
+                        setParty(null)
+                        setToken('')
+                        setUseCustomToken(false)
+                        setCustomToken('')
+                    }}
+                />
+            </DamlLedger>
+        </PartiesContext.Provider>
     )
 }

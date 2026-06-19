@@ -76,7 +76,7 @@ export default function App() {
     const [useCustomToken, setUseCustomToken] = useState(false)
 
     useEffect(() => {
-        ;(async () => {
+        ; (async () => {
             try {
                 let list = await loadParties()
                 // Auto-allocate any missing demo parties so the app is

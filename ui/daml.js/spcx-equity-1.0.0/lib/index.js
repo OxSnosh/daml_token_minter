@@ -7,4 +7,4 @@ function __export(m) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var Equity = require('./Equity');
 exports.Equity = Equity;
-exports.packageId = '5ccac177b37de4df8b650b149ebe281dd4c63c8c84e03fa729a04c3ec0bb9ef3';
+exports.packageId = 'b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3';

@@ -1,8 +1,10 @@
 import React from 'react'
 import CreateInstrument from './CreateInstrument'
-import AllowlistParty from './AllowlistParty'
-import MintShares from './MintShares'
-import Holdings from './Holdings'
+import LaunchOffering from './LaunchOffering'
+import MintUsdc from './MintUsdc'
+import IoiBook from './IoiBook'
+import Marketplace from './Marketplace'
+import Balances from './Balances'
 import { useDisplayName } from '../PartiesContext'
 
 interface Props {
@@ -19,28 +21,24 @@ export default function Dashboard({ party, onLogout }: Props) {
         <div className="dashboard">
             <header className="dash-header">
                 <div>
-                    <span className="logo">SPCX Equity</span>
+                    <span className="logo">SPCX Marketplace</span>
                     <span className="party-badge">Logged in as: <strong>{name}</strong></span>
                 </div>
                 <button className="logout-btn" onClick={onLogout}>Switch Party</button>
             </header>
 
             <main className="dash-main">
-                <Holdings party={party} />
+                <Balances />
 
-                {isIssuer && (
+                {isIssuer ? (
                     <>
+                        <MintUsdc issuer={party} />
                         <CreateInstrument issuer={party} />
-                        <AllowlistParty issuer={party} />
-                        <MintShares issuer={party} />
+                        <LaunchOffering issuer={party} />
+                        <IoiBook issuer={party} />
                     </>
-                )}
-
-                {!isIssuer && (
-                    <div className="info-box">
-                        <p>You are viewing as <strong>{name}</strong>. Holdings above show shares you own.</p>
-                        <p>Switch to <strong>Issuer</strong> to create instruments, allowlist parties, and mint shares.</p>
-                    </div>
+                ) : (
+                    <Marketplace investor={party} />
                 )}
             </main>
         </div>

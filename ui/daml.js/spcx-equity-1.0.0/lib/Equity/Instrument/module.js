@@ -41,7 +41,7 @@ exports.Merge = {
 
 exports.EquityHolding = damlTypes.assembleTemplate(
 {
-  templateId: '5ccac177b37de4df8b650b149ebe281dd4c63c8c84e03fa729a04c3ec0bb9ef3:Equity.Instrument:EquityHolding',
+  templateId: 'b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3:Equity.Instrument:EquityHolding',
   keyDecoder: damlTypes.lazyMemo(function () { return jtv.constant(undefined); }),
   keyEncode: function () { throw 'EncodeError'; },
   decoder: damlTypes.lazyMemo(function () { return jtv.object({issuer: damlTypes.Party.decoder, owner: damlTypes.Party.decoder, ticker: damlTypes.Text.decoder, amount: damlTypes.Numeric(10).decoder, }); }),
@@ -83,11 +83,11 @@ exports.EquityHolding = damlTypes.assembleTemplate(
 );
 
 
-damlTypes.registerTemplate(exports.EquityHolding, ['5ccac177b37de4df8b650b149ebe281dd4c63c8c84e03fa729a04c3ec0bb9ef3', '5ccac177b37de4df8b650b149ebe281dd4c63c8c84e03fa729a04c3ec0bb9ef3']);
+damlTypes.registerTemplate(exports.EquityHolding, ['b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3', 'b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3']);
 
 
 
-exports.RevokeAllowlist = {
+exports.CancelIOI = {
   decoder: damlTypes.lazyMemo(function () { return jtv.object({}); }),
   encode: function (__typed__) {
   return {
@@ -98,30 +98,54 @@ exports.RevokeAllowlist = {
 
 
 
-exports.AllowlistEntry = damlTypes.assembleTemplate(
-{
-  templateId: '5ccac177b37de4df8b650b149ebe281dd4c63c8c84e03fa729a04c3ec0bb9ef3:Equity.Instrument:AllowlistEntry',
-  keyDecoder: damlTypes.lazyMemo(function () { return damlTypes.lazyMemo(function () { return pkg40f452260bef3f29dede136108fc08a88d5a5250310281067087da6f0baddff7.DA.Types.Tuple3(damlTypes.Party, damlTypes.Text, damlTypes.Party).decoder; }); }),
-  keyEncode: function (__typed__) { return pkg40f452260bef3f29dede136108fc08a88d5a5250310281067087da6f0baddff7.DA.Types.Tuple3(damlTypes.Party, damlTypes.Text, damlTypes.Party).encode(__typed__); },
-  decoder: damlTypes.lazyMemo(function () { return jtv.object({issuer: damlTypes.Party.decoder, ticker: damlTypes.Text.decoder, party: damlTypes.Party.decoder, }); }),
+exports.Allocate = {
+  decoder: damlTypes.lazyMemo(function () { return jtv.object({dealPrice: damlTypes.Numeric(10).decoder, sharesToAllocate: damlTypes.Numeric(10).decoder, }); }),
   encode: function (__typed__) {
   return {
-    issuer: damlTypes.Party.encode(__typed__.issuer),
-    ticker: damlTypes.Text.encode(__typed__.ticker),
-    party: damlTypes.Party.encode(__typed__.party),
+    dealPrice: damlTypes.Numeric(10).encode(__typed__.dealPrice),
+    sharesToAllocate: damlTypes.Numeric(10).encode(__typed__.sharesToAllocate),
   };
 }
 ,
-  RevokeAllowlist: {
-    template: function () { return exports.AllowlistEntry; },
-    choiceName: 'RevokeAllowlist',
-    argumentDecoder: damlTypes.lazyMemo(function () { return exports.RevokeAllowlist.decoder; }),
-    argumentEncode: function (__typed__) { return exports.RevokeAllowlist.encode(__typed__); },
-    resultDecoder: damlTypes.lazyMemo(function () { return damlTypes.Unit.decoder; }),
-    resultEncode: function (__typed__) { return damlTypes.Unit.encode(__typed__); },
+};
+
+
+
+exports.IOI = damlTypes.assembleTemplate(
+{
+  templateId: 'b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3:Equity.Instrument:IOI',
+  keyDecoder: damlTypes.lazyMemo(function () { return jtv.constant(undefined); }),
+  keyEncode: function () { throw 'EncodeError'; },
+  decoder: damlTypes.lazyMemo(function () { return jtv.object({issuer: damlTypes.Party.decoder, investor: damlTypes.Party.decoder, ticker: damlTypes.Text.decoder, maxPrice: damlTypes.Numeric(10).decoder, sharesDesired: damlTypes.Numeric(10).decoder, escrowed: damlTypes.Numeric(10).decoder, }); }),
+  encode: function (__typed__) {
+  return {
+    issuer: damlTypes.Party.encode(__typed__.issuer),
+    investor: damlTypes.Party.encode(__typed__.investor),
+    ticker: damlTypes.Text.encode(__typed__.ticker),
+    maxPrice: damlTypes.Numeric(10).encode(__typed__.maxPrice),
+    sharesDesired: damlTypes.Numeric(10).encode(__typed__.sharesDesired),
+    escrowed: damlTypes.Numeric(10).encode(__typed__.escrowed),
+  };
+}
+,
+  Allocate: {
+    template: function () { return exports.IOI; },
+    choiceName: 'Allocate',
+    argumentDecoder: damlTypes.lazyMemo(function () { return exports.Allocate.decoder; }),
+    argumentEncode: function (__typed__) { return exports.Allocate.encode(__typed__); },
+    resultDecoder: damlTypes.lazyMemo(function () { return exports.AllocationResult.decoder; }),
+    resultEncode: function (__typed__) { return exports.AllocationResult.encode(__typed__); },
+  },
+  CancelIOI: {
+    template: function () { return exports.IOI; },
+    choiceName: 'CancelIOI',
+    argumentDecoder: damlTypes.lazyMemo(function () { return exports.CancelIOI.decoder; }),
+    argumentEncode: function (__typed__) { return exports.CancelIOI.encode(__typed__); },
+    resultDecoder: damlTypes.lazyMemo(function () { return damlTypes.ContractId(exports.UsdcHolding).decoder; }),
+    resultEncode: function (__typed__) { return damlTypes.ContractId(exports.UsdcHolding).encode(__typed__); },
   },
   Archive: {
-    template: function () { return exports.AllowlistEntry; },
+    template: function () { return exports.IOI; },
     choiceName: 'Archive',
     argumentDecoder: damlTypes.lazyMemo(function () { return pkgd14e08374fc7197d6a0de468c968ae8ba3aadbf9315476fd39071831f5923662.DA.Internal.Template.Archive.decoder; }),
     argumentEncode: function (__typed__) { return pkgd14e08374fc7197d6a0de468c968ae8ba3aadbf9315476fd39071831f5923662.DA.Internal.Template.Archive.encode(__typed__); },
@@ -133,17 +157,17 @@ exports.AllowlistEntry = damlTypes.assembleTemplate(
 );
 
 
-damlTypes.registerTemplate(exports.AllowlistEntry, ['5ccac177b37de4df8b650b149ebe281dd4c63c8c84e03fa729a04c3ec0bb9ef3', '5ccac177b37de4df8b650b149ebe281dd4c63c8c84e03fa729a04c3ec0bb9ef3']);
+damlTypes.registerTemplate(exports.IOI, ['b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3', 'b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3']);
 
 
 
-exports.MintShares = {
-  decoder: damlTypes.lazyMemo(function () { return jtv.object({recipient: damlTypes.Party.decoder, amount: damlTypes.Numeric(10).decoder, allowlistCid: damlTypes.ContractId(exports.AllowlistEntry).decoder, }); }),
+exports.AllocationResult = {
+  decoder: damlTypes.lazyMemo(function () { return jtv.object({sharesCid: damlTypes.Optional(damlTypes.ContractId(exports.EquityHolding)).decoder, refundCid: damlTypes.Optional(damlTypes.ContractId(exports.UsdcHolding)).decoder, proceedCid: damlTypes.Optional(damlTypes.ContractId(exports.UsdcHolding)).decoder, }); }),
   encode: function (__typed__) {
   return {
-    recipient: damlTypes.Party.encode(__typed__.recipient),
-    amount: damlTypes.Numeric(10).encode(__typed__.amount),
-    allowlistCid: damlTypes.ContractId(exports.AllowlistEntry).encode(__typed__.allowlistCid),
+    sharesCid: damlTypes.Optional(damlTypes.ContractId(exports.EquityHolding)).encode(__typed__.sharesCid),
+    refundCid: damlTypes.Optional(damlTypes.ContractId(exports.UsdcHolding)).encode(__typed__.refundCid),
+    proceedCid: damlTypes.Optional(damlTypes.ContractId(exports.UsdcHolding)).encode(__typed__.proceedCid),
   };
 }
 ,
@@ -151,11 +175,69 @@ exports.MintShares = {
 
 
 
-exports.AllowlistParty = {
-  decoder: damlTypes.lazyMemo(function () { return jtv.object({party: damlTypes.Party.decoder, }); }),
+exports.PlaceIOI = {
+  decoder: damlTypes.lazyMemo(function () { return jtv.object({investor: damlTypes.Party.decoder, usdcCid: damlTypes.ContractId(exports.UsdcHolding).decoder, maxPrice: damlTypes.Numeric(10).decoder, sharesDesired: damlTypes.Numeric(10).decoder, }); }),
   encode: function (__typed__) {
   return {
-    party: damlTypes.Party.encode(__typed__.party),
+    investor: damlTypes.Party.encode(__typed__.investor),
+    usdcCid: damlTypes.ContractId(exports.UsdcHolding).encode(__typed__.usdcCid),
+    maxPrice: damlTypes.Numeric(10).encode(__typed__.maxPrice),
+    sharesDesired: damlTypes.Numeric(10).encode(__typed__.sharesDesired),
+  };
+}
+,
+};
+
+
+
+exports.Offering = damlTypes.assembleTemplate(
+{
+  templateId: 'b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3:Equity.Instrument:Offering',
+  keyDecoder: damlTypes.lazyMemo(function () { return jtv.constant(undefined); }),
+  keyEncode: function () { throw 'EncodeError'; },
+  decoder: damlTypes.lazyMemo(function () { return jtv.object({issuer: damlTypes.Party.decoder, investors: damlTypes.List(damlTypes.Party).decoder, ticker: damlTypes.Text.decoder, priceTalk: damlTypes.Text.decoder, description: damlTypes.Text.decoder, }); }),
+  encode: function (__typed__) {
+  return {
+    issuer: damlTypes.Party.encode(__typed__.issuer),
+    investors: damlTypes.List(damlTypes.Party).encode(__typed__.investors),
+    ticker: damlTypes.Text.encode(__typed__.ticker),
+    priceTalk: damlTypes.Text.encode(__typed__.priceTalk),
+    description: damlTypes.Text.encode(__typed__.description),
+  };
+}
+,
+  PlaceIOI: {
+    template: function () { return exports.Offering; },
+    choiceName: 'PlaceIOI',
+    argumentDecoder: damlTypes.lazyMemo(function () { return exports.PlaceIOI.decoder; }),
+    argumentEncode: function (__typed__) { return exports.PlaceIOI.encode(__typed__); },
+    resultDecoder: damlTypes.lazyMemo(function () { return damlTypes.ContractId(exports.IOI).decoder; }),
+    resultEncode: function (__typed__) { return damlTypes.ContractId(exports.IOI).encode(__typed__); },
+  },
+  Archive: {
+    template: function () { return exports.Offering; },
+    choiceName: 'Archive',
+    argumentDecoder: damlTypes.lazyMemo(function () { return pkgd14e08374fc7197d6a0de468c968ae8ba3aadbf9315476fd39071831f5923662.DA.Internal.Template.Archive.decoder; }),
+    argumentEncode: function (__typed__) { return pkgd14e08374fc7197d6a0de468c968ae8ba3aadbf9315476fd39071831f5923662.DA.Internal.Template.Archive.encode(__typed__); },
+    resultDecoder: damlTypes.lazyMemo(function () { return damlTypes.Unit.decoder; }),
+    resultEncode: function (__typed__) { return damlTypes.Unit.encode(__typed__); },
+  },
+}
+
+);
+
+
+damlTypes.registerTemplate(exports.Offering, ['b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3', 'b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3']);
+
+
+
+exports.LaunchOffering = {
+  decoder: damlTypes.lazyMemo(function () { return jtv.object({investors: damlTypes.List(damlTypes.Party).decoder, priceTalk: damlTypes.Text.decoder, offeringDescription: damlTypes.Text.decoder, }); }),
+  encode: function (__typed__) {
+  return {
+    investors: damlTypes.List(damlTypes.Party).encode(__typed__.investors),
+    priceTalk: damlTypes.Text.encode(__typed__.priceTalk),
+    offeringDescription: damlTypes.Text.encode(__typed__.offeringDescription),
   };
 }
 ,
@@ -165,7 +247,7 @@ exports.AllowlistParty = {
 
 exports.EquityInstrument = damlTypes.assembleTemplate(
 {
-  templateId: '5ccac177b37de4df8b650b149ebe281dd4c63c8c84e03fa729a04c3ec0bb9ef3:Equity.Instrument:EquityInstrument',
+  templateId: 'b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3:Equity.Instrument:EquityInstrument',
   keyDecoder: damlTypes.lazyMemo(function () { return damlTypes.lazyMemo(function () { return pkg40f452260bef3f29dede136108fc08a88d5a5250310281067087da6f0baddff7.DA.Types.Tuple2(damlTypes.Party, damlTypes.Text).decoder; }); }),
   keyEncode: function (__typed__) { return pkg40f452260bef3f29dede136108fc08a88d5a5250310281067087da6f0baddff7.DA.Types.Tuple2(damlTypes.Party, damlTypes.Text).encode(__typed__); },
   decoder: damlTypes.lazyMemo(function () { return jtv.object({issuer: damlTypes.Party.decoder, ticker: damlTypes.Text.decoder, name: damlTypes.Text.decoder, description: damlTypes.Text.decoder, }); }),
@@ -178,21 +260,13 @@ exports.EquityInstrument = damlTypes.assembleTemplate(
   };
 }
 ,
-  AllowlistParty: {
+  LaunchOffering: {
     template: function () { return exports.EquityInstrument; },
-    choiceName: 'AllowlistParty',
-    argumentDecoder: damlTypes.lazyMemo(function () { return exports.AllowlistParty.decoder; }),
-    argumentEncode: function (__typed__) { return exports.AllowlistParty.encode(__typed__); },
-    resultDecoder: damlTypes.lazyMemo(function () { return damlTypes.ContractId(exports.AllowlistEntry).decoder; }),
-    resultEncode: function (__typed__) { return damlTypes.ContractId(exports.AllowlistEntry).encode(__typed__); },
-  },
-  MintShares: {
-    template: function () { return exports.EquityInstrument; },
-    choiceName: 'MintShares',
-    argumentDecoder: damlTypes.lazyMemo(function () { return exports.MintShares.decoder; }),
-    argumentEncode: function (__typed__) { return exports.MintShares.encode(__typed__); },
-    resultDecoder: damlTypes.lazyMemo(function () { return damlTypes.ContractId(exports.EquityHolding).decoder; }),
-    resultEncode: function (__typed__) { return damlTypes.ContractId(exports.EquityHolding).encode(__typed__); },
+    choiceName: 'LaunchOffering',
+    argumentDecoder: damlTypes.lazyMemo(function () { return exports.LaunchOffering.decoder; }),
+    argumentEncode: function (__typed__) { return exports.LaunchOffering.encode(__typed__); },
+    resultDecoder: damlTypes.lazyMemo(function () { return damlTypes.ContractId(exports.Offering).decoder; }),
+    resultEncode: function (__typed__) { return damlTypes.ContractId(exports.Offering).encode(__typed__); },
   },
   Archive: {
     template: function () { return exports.EquityInstrument; },
@@ -207,5 +281,77 @@ exports.EquityInstrument = damlTypes.assembleTemplate(
 );
 
 
-damlTypes.registerTemplate(exports.EquityInstrument, ['5ccac177b37de4df8b650b149ebe281dd4c63c8c84e03fa729a04c3ec0bb9ef3', '5ccac177b37de4df8b650b149ebe281dd4c63c8c84e03fa729a04c3ec0bb9ef3']);
+damlTypes.registerTemplate(exports.EquityInstrument, ['b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3', 'b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3']);
+
+
+
+exports.MergeUsdc = {
+  decoder: damlTypes.lazyMemo(function () { return jtv.object({otherCid: damlTypes.ContractId(exports.UsdcHolding).decoder, }); }),
+  encode: function (__typed__) {
+  return {
+    otherCid: damlTypes.ContractId(exports.UsdcHolding).encode(__typed__.otherCid),
+  };
+}
+,
+};
+
+
+
+exports.TransferUsdc = {
+  decoder: damlTypes.lazyMemo(function () { return jtv.object({newOwner: damlTypes.Party.decoder, transferAmount: damlTypes.Numeric(10).decoder, }); }),
+  encode: function (__typed__) {
+  return {
+    newOwner: damlTypes.Party.encode(__typed__.newOwner),
+    transferAmount: damlTypes.Numeric(10).encode(__typed__.transferAmount),
+  };
+}
+,
+};
+
+
+
+exports.UsdcHolding = damlTypes.assembleTemplate(
+{
+  templateId: 'b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3:Equity.Instrument:UsdcHolding',
+  keyDecoder: damlTypes.lazyMemo(function () { return jtv.constant(undefined); }),
+  keyEncode: function () { throw 'EncodeError'; },
+  decoder: damlTypes.lazyMemo(function () { return jtv.object({issuer: damlTypes.Party.decoder, owner: damlTypes.Party.decoder, amount: damlTypes.Numeric(10).decoder, }); }),
+  encode: function (__typed__) {
+  return {
+    issuer: damlTypes.Party.encode(__typed__.issuer),
+    owner: damlTypes.Party.encode(__typed__.owner),
+    amount: damlTypes.Numeric(10).encode(__typed__.amount),
+  };
+}
+,
+  TransferUsdc: {
+    template: function () { return exports.UsdcHolding; },
+    choiceName: 'TransferUsdc',
+    argumentDecoder: damlTypes.lazyMemo(function () { return exports.TransferUsdc.decoder; }),
+    argumentEncode: function (__typed__) { return exports.TransferUsdc.encode(__typed__); },
+    resultDecoder: damlTypes.lazyMemo(function () { return damlTypes.ContractId(exports.UsdcHolding).decoder; }),
+    resultEncode: function (__typed__) { return damlTypes.ContractId(exports.UsdcHolding).encode(__typed__); },
+  },
+  MergeUsdc: {
+    template: function () { return exports.UsdcHolding; },
+    choiceName: 'MergeUsdc',
+    argumentDecoder: damlTypes.lazyMemo(function () { return exports.MergeUsdc.decoder; }),
+    argumentEncode: function (__typed__) { return exports.MergeUsdc.encode(__typed__); },
+    resultDecoder: damlTypes.lazyMemo(function () { return damlTypes.ContractId(exports.UsdcHolding).decoder; }),
+    resultEncode: function (__typed__) { return damlTypes.ContractId(exports.UsdcHolding).encode(__typed__); },
+  },
+  Archive: {
+    template: function () { return exports.UsdcHolding; },
+    choiceName: 'Archive',
+    argumentDecoder: damlTypes.lazyMemo(function () { return pkgd14e08374fc7197d6a0de468c968ae8ba3aadbf9315476fd39071831f5923662.DA.Internal.Template.Archive.decoder; }),
+    argumentEncode: function (__typed__) { return pkgd14e08374fc7197d6a0de468c968ae8ba3aadbf9315476fd39071831f5923662.DA.Internal.Template.Archive.encode(__typed__); },
+    resultDecoder: damlTypes.lazyMemo(function () { return damlTypes.Unit.decoder; }),
+    resultEncode: function (__typed__) { return damlTypes.Unit.encode(__typed__); },
+  },
+}
+
+);
+
+
+damlTypes.registerTemplate(exports.UsdcHolding, ['b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3', 'b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3']);
 

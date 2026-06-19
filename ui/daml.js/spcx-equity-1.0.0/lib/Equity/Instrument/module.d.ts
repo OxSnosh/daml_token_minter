@@ -42,7 +42,7 @@ export declare interface EquityHoldingInterface {
   Burn: damlTypes.Choice<EquityHolding, Burn, {}, undefined> & damlTypes.ChoiceFrom<damlTypes.Template<EquityHolding, undefined>>;
 }
 export declare const EquityHolding:
-  damlTypes.Template<EquityHolding, undefined, '5ccac177b37de4df8b650b149ebe281dd4c63c8c84e03fa729a04c3ec0bb9ef3:Equity.Instrument:EquityHolding'> &
+  damlTypes.Template<EquityHolding, undefined, 'b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3:Equity.Instrument:EquityHolding'> &
   damlTypes.ToInterface<EquityHolding, never> &
   EquityHoldingInterface;
 
@@ -55,58 +55,113 @@ export declare namespace EquityHolding {
 
 
 
-export declare type RevokeAllowlist = {
+export declare type CancelIOI = {
 };
 
-export declare const RevokeAllowlist:
-  damlTypes.Serializable<RevokeAllowlist> & {
+export declare const CancelIOI:
+  damlTypes.Serializable<CancelIOI> & {
   }
 ;
 
 
-export declare type AllowlistEntry = {
+export declare type Allocate = {
+  dealPrice: damlTypes.Numeric;
+  sharesToAllocate: damlTypes.Numeric;
+};
+
+export declare const Allocate:
+  damlTypes.Serializable<Allocate> & {
+  }
+;
+
+
+export declare type IOI = {
   issuer: damlTypes.Party;
+  investor: damlTypes.Party;
   ticker: string;
-  party: damlTypes.Party;
+  maxPrice: damlTypes.Numeric;
+  sharesDesired: damlTypes.Numeric;
+  escrowed: damlTypes.Numeric;
 };
 
-export declare interface AllowlistEntryInterface {
-  RevokeAllowlist: damlTypes.Choice<AllowlistEntry, RevokeAllowlist, {}, AllowlistEntry.Key> & damlTypes.ChoiceFrom<damlTypes.Template<AllowlistEntry, AllowlistEntry.Key>>;
-  Archive: damlTypes.Choice<AllowlistEntry, pkgd14e08374fc7197d6a0de468c968ae8ba3aadbf9315476fd39071831f5923662.DA.Internal.Template.Archive, {}, AllowlistEntry.Key> & damlTypes.ChoiceFrom<damlTypes.Template<AllowlistEntry, AllowlistEntry.Key>>;
+export declare interface IOIInterface {
+  Allocate: damlTypes.Choice<IOI, Allocate, AllocationResult, undefined> & damlTypes.ChoiceFrom<damlTypes.Template<IOI, undefined>>;
+  CancelIOI: damlTypes.Choice<IOI, CancelIOI, damlTypes.ContractId<UsdcHolding>, undefined> & damlTypes.ChoiceFrom<damlTypes.Template<IOI, undefined>>;
+  Archive: damlTypes.Choice<IOI, pkgd14e08374fc7197d6a0de468c968ae8ba3aadbf9315476fd39071831f5923662.DA.Internal.Template.Archive, {}, undefined> & damlTypes.ChoiceFrom<damlTypes.Template<IOI, undefined>>;
 }
-export declare const AllowlistEntry:
-  damlTypes.Template<AllowlistEntry, AllowlistEntry.Key, '5ccac177b37de4df8b650b149ebe281dd4c63c8c84e03fa729a04c3ec0bb9ef3:Equity.Instrument:AllowlistEntry'> &
-  damlTypes.ToInterface<AllowlistEntry, never> &
-  AllowlistEntryInterface;
+export declare const IOI:
+  damlTypes.Template<IOI, undefined, 'b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3:Equity.Instrument:IOI'> &
+  damlTypes.ToInterface<IOI, never> &
+  IOIInterface;
 
-export declare namespace AllowlistEntry {
-  export type Key = pkg40f452260bef3f29dede136108fc08a88d5a5250310281067087da6f0baddff7.DA.Types.Tuple3<damlTypes.Party, string, damlTypes.Party>
-  export type CreateEvent = damlLedger.CreateEvent<AllowlistEntry, AllowlistEntry.Key, typeof AllowlistEntry.templateId>
-  export type ArchiveEvent = damlLedger.ArchiveEvent<AllowlistEntry, typeof AllowlistEntry.templateId>
-  export type Event = damlLedger.Event<AllowlistEntry, AllowlistEntry.Key, typeof AllowlistEntry.templateId>
-  export type QueryResult = damlLedger.QueryResult<AllowlistEntry, AllowlistEntry.Key, typeof AllowlistEntry.templateId>
+export declare namespace IOI {
+  export type CreateEvent = damlLedger.CreateEvent<IOI, undefined, typeof IOI.templateId>
+  export type ArchiveEvent = damlLedger.ArchiveEvent<IOI, typeof IOI.templateId>
+  export type Event = damlLedger.Event<IOI, undefined, typeof IOI.templateId>
+  export type QueryResult = damlLedger.QueryResult<IOI, undefined, typeof IOI.templateId>
 }
 
 
 
-export declare type MintShares = {
-  recipient: damlTypes.Party;
-  amount: damlTypes.Numeric;
-  allowlistCid: damlTypes.ContractId<AllowlistEntry>;
+export declare type AllocationResult = {
+  sharesCid: damlTypes.Optional<damlTypes.ContractId<EquityHolding>>;
+  refundCid: damlTypes.Optional<damlTypes.ContractId<UsdcHolding>>;
+  proceedCid: damlTypes.Optional<damlTypes.ContractId<UsdcHolding>>;
 };
 
-export declare const MintShares:
-  damlTypes.Serializable<MintShares> & {
+export declare const AllocationResult:
+  damlTypes.Serializable<AllocationResult> & {
   }
 ;
 
 
-export declare type AllowlistParty = {
-  party: damlTypes.Party;
+export declare type PlaceIOI = {
+  investor: damlTypes.Party;
+  usdcCid: damlTypes.ContractId<UsdcHolding>;
+  maxPrice: damlTypes.Numeric;
+  sharesDesired: damlTypes.Numeric;
 };
 
-export declare const AllowlistParty:
-  damlTypes.Serializable<AllowlistParty> & {
+export declare const PlaceIOI:
+  damlTypes.Serializable<PlaceIOI> & {
+  }
+;
+
+
+export declare type Offering = {
+  issuer: damlTypes.Party;
+  investors: damlTypes.Party[];
+  ticker: string;
+  priceTalk: string;
+  description: string;
+};
+
+export declare interface OfferingInterface {
+  PlaceIOI: damlTypes.Choice<Offering, PlaceIOI, damlTypes.ContractId<IOI>, undefined> & damlTypes.ChoiceFrom<damlTypes.Template<Offering, undefined>>;
+  Archive: damlTypes.Choice<Offering, pkgd14e08374fc7197d6a0de468c968ae8ba3aadbf9315476fd39071831f5923662.DA.Internal.Template.Archive, {}, undefined> & damlTypes.ChoiceFrom<damlTypes.Template<Offering, undefined>>;
+}
+export declare const Offering:
+  damlTypes.Template<Offering, undefined, 'b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3:Equity.Instrument:Offering'> &
+  damlTypes.ToInterface<Offering, never> &
+  OfferingInterface;
+
+export declare namespace Offering {
+  export type CreateEvent = damlLedger.CreateEvent<Offering, undefined, typeof Offering.templateId>
+  export type ArchiveEvent = damlLedger.ArchiveEvent<Offering, typeof Offering.templateId>
+  export type Event = damlLedger.Event<Offering, undefined, typeof Offering.templateId>
+  export type QueryResult = damlLedger.QueryResult<Offering, undefined, typeof Offering.templateId>
+}
+
+
+
+export declare type LaunchOffering = {
+  investors: damlTypes.Party[];
+  priceTalk: string;
+  offeringDescription: string;
+};
+
+export declare const LaunchOffering:
+  damlTypes.Serializable<LaunchOffering> & {
   }
 ;
 
@@ -119,12 +174,11 @@ export declare type EquityInstrument = {
 };
 
 export declare interface EquityInstrumentInterface {
-  AllowlistParty: damlTypes.Choice<EquityInstrument, AllowlistParty, damlTypes.ContractId<AllowlistEntry>, EquityInstrument.Key> & damlTypes.ChoiceFrom<damlTypes.Template<EquityInstrument, EquityInstrument.Key>>;
-  MintShares: damlTypes.Choice<EquityInstrument, MintShares, damlTypes.ContractId<EquityHolding>, EquityInstrument.Key> & damlTypes.ChoiceFrom<damlTypes.Template<EquityInstrument, EquityInstrument.Key>>;
+  LaunchOffering: damlTypes.Choice<EquityInstrument, LaunchOffering, damlTypes.ContractId<Offering>, EquityInstrument.Key> & damlTypes.ChoiceFrom<damlTypes.Template<EquityInstrument, EquityInstrument.Key>>;
   Archive: damlTypes.Choice<EquityInstrument, pkgd14e08374fc7197d6a0de468c968ae8ba3aadbf9315476fd39071831f5923662.DA.Internal.Template.Archive, {}, EquityInstrument.Key> & damlTypes.ChoiceFrom<damlTypes.Template<EquityInstrument, EquityInstrument.Key>>;
 }
 export declare const EquityInstrument:
-  damlTypes.Template<EquityInstrument, EquityInstrument.Key, '5ccac177b37de4df8b650b149ebe281dd4c63c8c84e03fa729a04c3ec0bb9ef3:Equity.Instrument:EquityInstrument'> &
+  damlTypes.Template<EquityInstrument, EquityInstrument.Key, 'b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3:Equity.Instrument:EquityInstrument'> &
   damlTypes.ToInterface<EquityInstrument, never> &
   EquityInstrumentInterface;
 
@@ -134,6 +188,52 @@ export declare namespace EquityInstrument {
   export type ArchiveEvent = damlLedger.ArchiveEvent<EquityInstrument, typeof EquityInstrument.templateId>
   export type Event = damlLedger.Event<EquityInstrument, EquityInstrument.Key, typeof EquityInstrument.templateId>
   export type QueryResult = damlLedger.QueryResult<EquityInstrument, EquityInstrument.Key, typeof EquityInstrument.templateId>
+}
+
+
+
+export declare type MergeUsdc = {
+  otherCid: damlTypes.ContractId<UsdcHolding>;
+};
+
+export declare const MergeUsdc:
+  damlTypes.Serializable<MergeUsdc> & {
+  }
+;
+
+
+export declare type TransferUsdc = {
+  newOwner: damlTypes.Party;
+  transferAmount: damlTypes.Numeric;
+};
+
+export declare const TransferUsdc:
+  damlTypes.Serializable<TransferUsdc> & {
+  }
+;
+
+
+export declare type UsdcHolding = {
+  issuer: damlTypes.Party;
+  owner: damlTypes.Party;
+  amount: damlTypes.Numeric;
+};
+
+export declare interface UsdcHoldingInterface {
+  TransferUsdc: damlTypes.Choice<UsdcHolding, TransferUsdc, damlTypes.ContractId<UsdcHolding>, undefined> & damlTypes.ChoiceFrom<damlTypes.Template<UsdcHolding, undefined>>;
+  MergeUsdc: damlTypes.Choice<UsdcHolding, MergeUsdc, damlTypes.ContractId<UsdcHolding>, undefined> & damlTypes.ChoiceFrom<damlTypes.Template<UsdcHolding, undefined>>;
+  Archive: damlTypes.Choice<UsdcHolding, pkgd14e08374fc7197d6a0de468c968ae8ba3aadbf9315476fd39071831f5923662.DA.Internal.Template.Archive, {}, undefined> & damlTypes.ChoiceFrom<damlTypes.Template<UsdcHolding, undefined>>;
+}
+export declare const UsdcHolding:
+  damlTypes.Template<UsdcHolding, undefined, 'b8754779aad106ed3eca03c3a0abb01b819a12e0e5c879d0f58da2e5b4ff5da3:Equity.Instrument:UsdcHolding'> &
+  damlTypes.ToInterface<UsdcHolding, never> &
+  UsdcHoldingInterface;
+
+export declare namespace UsdcHolding {
+  export type CreateEvent = damlLedger.CreateEvent<UsdcHolding, undefined, typeof UsdcHolding.templateId>
+  export type ArchiveEvent = damlLedger.ArchiveEvent<UsdcHolding, typeof UsdcHolding.templateId>
+  export type Event = damlLedger.Event<UsdcHolding, undefined, typeof UsdcHolding.templateId>
+  export type QueryResult = damlLedger.QueryResult<UsdcHolding, undefined, typeof UsdcHolding.templateId>
 }
 
 

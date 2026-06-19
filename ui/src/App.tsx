@@ -2,37 +2,7 @@ import React, { useEffect, useState } from 'react'
 import DamlLedger from '@daml/react'
 import Dashboard from './components/Dashboard'
 import { PartiesContext, PartyInfo } from './PartiesContext'
-
-// ---------------------------------------------------------------------------
-// Dev-mode token — works with: daml json-api --allow-insecure-tokens
-// (signature is not verified, but the claim must carry the ledgerId and the
-//  full namespaced party identifier, e.g. "Issuer::1220abc…").
-// ---------------------------------------------------------------------------
-
-const LEDGER_ID = 'sandbox'
-// Use current origin so requests go through the Vite proxy → no CORS.
-const JSON_API_URL = window.location.origin + '/'
-
-function b64url(obj: object): string {
-    return btoa(JSON.stringify(obj))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '')
-}
-
-function devToken(partyId: string): string {
-    const header = b64url({ alg: 'HS256', typ: 'JWT' })
-    const payload = b64url({
-        'https://daml.com/ledger-api': {
-            ledgerId: LEDGER_ID,
-            actAs: [partyId],
-            readAs: [partyId],
-            applicationId: 'spcx-app',
-        },
-    })
-    // Signature is not verified in dev mode (--allow-insecure-tokens).
-    return `${header}.${payload}.dev`
-}
+import { devToken, JSON_API_URL } from './ledger'
 
 // Bootstrap token used only to list/allocate parties. The /v1/parties
 // endpoints accept any structurally valid token in dev mode.

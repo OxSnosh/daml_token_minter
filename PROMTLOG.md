@@ -48,8 +48,27 @@
 
 23. "it still says sandbox not running"
 
+
 24. "did i need to run daml install latest?"
 
 25. "i have 3.4.11 running can you please take me back to 2.10.4"
 
 26. "how do i switch daml versions"
+
+27. "please make sure you update the promptlog for every request. please let me know the 3 command for starting this application"
+
+28. "i am getting this error. please update the prompt log — daml json-api Invalid argument `json-api' (on DAML SDK 3.4.11)"
+
+29. "2.10.4 is already installed"
+
+30. "getting this error in the frontend: Identifier 'b64url' has already been declared (App.tsx:128)"
+
+31. "when i go to create instrument i get an error undefined: HTTP 401 Unauthorized from json-api logs"
+
+32. "i get this error: Error: Unknown option --auth-jwt-hs256-unsafe / Error: Unknown argument 'secret'"
+
+33. "i get this error: Error: Unknown option --wall-clock-time (daml start)"
+
+34. "this is what im getting now — Error: Unknown option --allow-insecure-tokens (when passed via --json-api-option)"
+
+35. "i am getting this error now — HTTP 401 Unauthorized (json-api running but rejecting devToken)"

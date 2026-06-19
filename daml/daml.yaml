@@ -6,9 +6,6 @@ dependencies:
   - daml-prim
   - daml-stdlib
 
-sandbox-options:
-  - --wall-clock-time
-
 parties:
   - Issuer
   - Alice

@@ -1,0 +1,15 @@
+sdk-version: 2.10.4
+name: spcx-equity
+source: .
+version: 1.0.0
+dependencies:
+  - daml-prim
+  - daml-stdlib
+
+sandbox-options:
+  - --wall-clock-time
+
+parties:
+  - Issuer
+  - Alice
+  - Bob

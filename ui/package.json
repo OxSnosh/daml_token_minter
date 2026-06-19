@@ -1,0 +1,29 @@
+{
+    "name": "spcx-equity-ui",
+    "version": "1.0.0",
+    "private": true,
+    "workspaces": [
+        "daml.js/*"
+    ],
+    "scripts": {
+        "start": "vite",
+        "build": "tsc && vite build",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "@daml/ledger": "2.10.4",
+        "@daml/react": "2.10.4",
+        "@daml/types": "2.10.4",
+        "@daml.js/spcx-equity-1.0.0": "file:daml.js/spcx-equity-1.0.0",
+        "@mojotech/json-type-validation": "^3.1.0",
+        "react": "^17.0.2",
+        "react-dom": "^17.0.2"
+    },
+    "devDependencies": {
+        "@types/react": "^17.0.80",
+        "@types/react-dom": "^17.0.25",
+        "@vitejs/plugin-react": "^4.2.1",
+        "typescript": "^5.6.2",
+        "vite": "^4.5.3"
+    }
+}

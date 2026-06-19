@@ -1,0 +1,93 @@
+module Equity.Instrument where
+
+-- | The equity instrument representing a tokenized stock (e.g. SPCX).
+-- Created by the issuer. Holds metadata about the equity.
+template EquityInstrument
+  with
+    issuer   : Party
+    ticker   : Text
+    name     : Text
+    description : Text
+  where
+    signatory issuer
+
+    key (issuer, ticker) : (Party, Text)
+    maintainer key._1
+
+    -- | Allowlist a party so they can receive holdings of this instrument.
+    nonconsuming choice AllowlistParty : ContractId AllowlistEntry
+      with
+        party : Party
+      controller issuer
+      do
+        create AllowlistEntry with
+          issuer
+          ticker
+          party
+
+    -- | Mint a specified number of shares to an allowlisted party.
+    nonconsuming choice MintShares : ContractId EquityHolding
+      with
+        recipient  : Party
+        amount     : Decimal
+        allowlistCid : ContractId AllowlistEntry
+      controller issuer
+      do
+        -- Verify the allowlist entry belongs to this issuer/ticker/party
+        entry <- fetch allowlistCid
+        assert (entry.issuer == issuer)
+        assert (entry.ticker == ticker)
+        assert (entry.party  == recipient)
+        assert (amount > 0.0)
+        create EquityHolding with
+          issuer
+          owner  = recipient
+          ticker
+          amount
+
+-- | A permission record authorizing a party to hold shares of a given instrument.
+template AllowlistEntry
+  with
+    issuer : Party
+    ticker : Text
+    party  : Party
+  where
+    signatory issuer
+    observer party
+
+    key (issuer, ticker, party) : (Party, Text, Party)
+    maintainer key._1
+
+    -- | Issuer can revoke allowlist status.
+    choice RevokeAllowlist : ()
+      controller issuer
+      do return ()
+
+-- | Represents shares of a tokenized equity held by a party.
+template EquityHolding
+  with
+    issuer : Party
+    owner  : Party
+    ticker : Text
+    amount : Decimal
+  where
+    signatory issuer
+    observer owner
+
+    -- | Allows the issuer to merge two holdings into one.
+    choice Merge : ContractId EquityHolding
+      with
+        otherCid : ContractId EquityHolding
+      controller issuer
+      do
+        other <- fetch otherCid
+        assert (other.owner  == owner)
+        assert (other.ticker == ticker)
+        assert (other.issuer == issuer)
+        archive otherCid
+        create this with amount = amount + other.amount
+
+    -- | Allows the issuer to burn / redeem shares.
+    choice Burn : ()
+      controller issuer
+      do return ()

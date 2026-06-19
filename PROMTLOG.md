@@ -78,3 +78,13 @@
 37. "now i am getting this error when i see undefined: HTTP 400 Bad Request on create" (root cause: Canton parties Issuer/Alice/Bob were never allocated and use namespaced IDs like 'Issuer::1220…'; allocated parties via json-api and made the UI fetch real party IDs dynamically)
 
 38. "please update the README with instruction on how to do this"
+
+39. Ok I have a job for you. please make sure you add this prompt to the prompt log. I just created a new branch called marketplace. I want to reate a marketplace for digitized assets. Lets start with the example of tokenized spaceX. The flow should be as follows. The issuer should be able to launch an offering for an IPO. In order to announce an IPO, an issuer needs to define the token being sold in the marketplace. The issuer has the authority to launch an offering and alice and bob have the ability to subscribe to the offering VIA an indication of intereset. At the outset of the flow Alice and Bob will each have 1000000 USDC minted in their wallets. The issuer will then launch a deal with a ticker, price talk, and description. the IPO will be viewable in the marketplace by Alice and Bobs accounts when signed in. Alice and Bob can then place an indication of intrest in the transaction by specifyinh a max price and shares desired. this will then escrow the USDC (max price * shares desired) into the smart contract (or with the issuer whichever DAML allows for). The issuer will then be able to see the book of IOIs from Alice and BOB and choose to allocate them any or all of their shares. When the allocation takes place the issuer will input the shares to allocate to Alce and Bob and click allocate and the shares will be sent to the respective accounts and excess USDC will be retruned. The remaining proceeds of the IPO will be able to be withdrawn by the issuer or sent to the issuers account. Please include in the front end all token balances at any time for the Issuer, Alice and Bob. Please leave me with instructions for how to use the app.
+
+40. "i dont see the seed demo USDC button where is it. please update the rpompt log"
+
+41. "i am navigating to localhost:3001 and nothing is showing up"
+
+42. "i am getting this error in the console — Uncaught TypeError: Cannot read properties of undefined (reading 'templateId') at ledger.ts:56:48"
+
+43. "This is great! When it comes time to allocate a deal I need the issuer to be able to specify a deal price (the same price for everyone) and allocate at the price only to orders with a max price above the deal price"

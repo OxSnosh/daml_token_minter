@@ -1,14 +1,26 @@
 
-# SPCX Equity — Tokenized Stock on Canton Network
+# SPCX Equity — Tokenized Stock Marketplace on Canton Network
 
-A DAML smart contract prototype representing tokenized SpaceX equity (`SPCX`) on the Canton Network, built as a take-home interview project for NASDAQ.
+A DAML smart-contract prototype of a **digital-asset IPO marketplace** on the
+Canton Network, using tokenized SpaceX equity (`SPCX`) as the example. Built as
+a take-home interview project for NASDAQ.
 
 ## What it does
 
-- **Create** a `SPCX` equity instrument on-ledger (issuer-controlled)
-- **Allowlist** a party to be eligible to receive shares
-- **Mint** shares to an allowlisted party
-- **View balances** held per party in a live React dashboard
+An issuer runs a primary-market IPO that investors subscribe to with escrowed
+USDC:
+
+- **Mint USDC** — the issuer seeds investor wallets (1,000,000 USDC each).
+- **Define the token** — the issuer creates the `SPCX` equity instrument.
+- **Launch an offering** — the issuer announces an IPO with a ticker, price
+  talk, and description.
+- **Place an Indication of Interest (IOI)** — investors bid a max price and
+  share quantity; the exact escrow (`maxPrice × shares`) of USDC is locked.
+- **Allocate** — the issuer reviews the IOI book and allocates any or all
+  shares per bid. Shares are minted to the investor, sale proceeds flow to the
+  issuer's wallet, and unused escrow is refunded — atomically.
+- **Live balances** — a dashboard shows every party's USDC and share balances
+  at all times.
 
 ## Architecture
 
@@ -18,6 +30,17 @@ React + @daml/react  ──HTTP──▶  DAML JSON API (port 7575)  ──gRPC�
                                                                          DAML Model (.dar)
                                                                     Equity/Instrument.daml
 ```
+
+### DAML model (`daml/Equity/Instrument.daml`)
+
+| Template | Purpose |
+|----------|---------|
+| `UsdcHolding` | Cash token (signatory issuer, observer owner). Owner-controlled `TransferUsdc` / `MergeUsdc`. |
+| `EquityInstrument` | Defines a tokenized stock; `LaunchOffering` choice starts an IPO. |
+| `Offering` | A live IPO; `PlaceIOI` escrows USDC and creates an `IOI`. |
+| `IOI` | An investor bid; `Allocate` settles (shares + proceeds + refund), `CancelIOI` reclaims escrow. |
+| `EquityHolding` | Shares of a tokenized equity held by a party. |
+
 
 ## Prerequisites
 
@@ -114,14 +137,54 @@ required — omitting either results in an HTTP 401 from the JSON API.
 | Login screen shows "No named parties found" | The JSON API isn't running on port 7575 — start Terminal 1 first. |
 
 
-## Demo walkthrough
+## How to use the app (IPO walkthrough)
 
-1. Open http://localhost:3000 → log in as **Issuer**
-2. **Create Instrument** → ticker `SPCX`, company `SpaceX Inc.`
-3. **Allowlist Party** → select `Alice` from the dropdown
-4. **Mint Shares** → select Alice, enter `1000`
-5. **Switch Party** → log in as **Alice** → see 1,000 SPCX in Holdings
+The full flow uses three parties: **Issuer** (the company running the IPO) and
+**Alice** / **Bob** (investors). Switch between them with the **Switch party**
+button in the header — each login is a separate ledger identity.
 
+> **If you changed the DAML model**, restart Terminal 1 (`daml start`) so the new
+> `.dar` is uploaded, then reload the browser.
+
+### 1. As the **Issuer** — set up the market
+
+1. Open http://localhost:3000 and log in as **Issuer**.
+2. **Seed demo USDC** → click **“Seed demo: 1,000,000 USDC → each investor.”**
+   This mints 1,000,000 USDC into Alice's and Bob's wallets. (You can also mint
+   a custom amount to a chosen party below.)
+3. **Define the token** → in *Create Instrument*, enter ticker `SPCX`, name
+   `SpaceX Inc.`, and a description, then create it.
+4. **Launch the offering** → in *Launch Offering*, pick the `SPCX` instrument,
+   enter **price talk** (e.g. `$95.00 – $105.00`) and a **description**, then
+   launch. The IPO is now visible to Alice and Bob.
+
+### 2. As **Alice** / **Bob** — subscribe to the IPO
+
+1. **Switch party** → log in as **Alice** (repeat later for **Bob**).
+2. The **Marketplace** lists the live `SPCX` offering and shows your USDC
+   balance.
+3. Enter a **max price** and the **shares desired**. The card previews the
+   escrow cost (`max price × shares`).
+4. Click **Place IOI**. That exact amount of USDC is locked into the contract
+   as escrow, and your bid appears under **My IOIs** (cancelable until
+   allocated).
+
+### 3. As the **Issuer** — allocate shares
+
+1. **Switch party** → log back in as **Issuer**.
+2. The **IOI Book** lists every bid from Alice and Bob (investor, ticker, max
+   price, shares desired, escrowed USDC).
+3. Enter the **shares to allocate** for each bid (defaults to the full request)
+   and click **Allocate**. Atomically:
+   - `SPCX` shares are minted to the investor,
+   - sale proceeds (`shares × max price`) move to the issuer's USDC wallet,
+   - any unused escrow is refunded to the investor.
+
+### 4. Watch balances update live
+
+The **Balances** panel at the top of every dashboard shows USDC and per-ticker
+share holdings for the Issuer, Alice, and Bob — refreshed continuously, so you
+can confirm escrow, allocation, proceeds, and refunds as they settle.
 
 ## Project structure
 
@@ -130,17 +193,20 @@ NASDAQ/
 ├── daml/                        # DAML smart contracts
 │   ├── daml.yaml
 │   └── Equity/
-│       └── Instrument.daml      # EquityInstrument, AllowlistEntry, EquityHolding
+│       └── Instrument.daml      # UsdcHolding, EquityInstrument, Offering, IOI, EquityHolding
 ├── ui/                          # React + TypeScript frontend
 │   ├── src/
 │   │   ├── App.tsx              # Login, party discovery + auto-allocation, dev token
+│   │   ├── ledger.ts            # JSON-API helpers, dev token, raw queries
 │   │   ├── PartiesContext.tsx   # Maps display names ↔ full namespaced party IDs
 │   │   └── components/
-│   │       ├── Dashboard.tsx
-│   │       ├── CreateInstrument.tsx
-│   │       ├── AllowlistParty.tsx
-│   │       ├── MintShares.tsx
-│   │       └── Holdings.tsx
+│   │       ├── Dashboard.tsx        # Routes Issuer vs investor views
+│   │       ├── Balances.tsx         # Live USDC + share balances for all parties
+│   │       ├── MintUsdc.tsx         # Issuer: seed / mint USDC
+│   │       ├── CreateInstrument.tsx # Issuer: define a tokenized equity
+│   │       ├── LaunchOffering.tsx   # Issuer: announce an IPO
+│   │       ├── Marketplace.tsx      # Investor: browse offerings, place IOIs
+│   │       └── IoiBook.tsx          # Issuer: review IOIs and allocate shares
 │   └── daml.js/                 # Generated TypeScript bindings (daml codegen js)
 ├── generate-tokens.js           # HS256 JWT token generator for sandbox auth
 ├── start.sh                     # One-command launcher

@@ -1,12 +1,57 @@
 module Equity.Instrument where
 
--- | The equity instrument representing a tokenized stock (e.g. SPCX).
--- Created by the issuer. Holds metadata about the equity.
+import DA.Action (void, when)
+
+-- ===========================================================================
+-- USDC — a simple cash/stablecoin token.
+--   * signatory: issuer (the cash authority)
+--   * observer:  owner
+-- Because the issuer is the sole signatory, owner-controlled choices can move
+-- funds: within a choice the issuer's authority flows from the consumed
+-- contract's signatory, so freshly-created holdings remain validly signed.
+-- ===========================================================================
+template UsdcHolding
+  with
+    issuer : Party
+    owner  : Party
+    amount : Decimal
+  where
+    signatory issuer
+    observer owner
+    ensure amount > 0.0
+
+    -- | Owner sends part or all of this holding to another party.
+    choice TransferUsdc : ContractId UsdcHolding
+      with
+        newOwner       : Party
+        transferAmount : Decimal
+      controller owner
+      do
+        assert (transferAmount > 0.0 && transferAmount <= amount)
+        when (transferAmount < amount) $ void $
+          create this with amount = amount - transferAmount
+        create UsdcHolding with issuer; owner = newOwner; amount = transferAmount
+
+    -- | Owner merges another of their holdings into this one.
+    choice MergeUsdc : ContractId UsdcHolding
+      with
+        otherCid : ContractId UsdcHolding
+      controller owner
+      do
+        other <- fetch otherCid
+        assert (other.owner == owner && other.issuer == issuer)
+        archive otherCid
+        create this with amount = amount + other.amount
+
+-- ===========================================================================
+-- Equity instrument — defines a tokenized stock (e.g. SPCX) and is the entry
+-- point for launching an IPO offering.
+-- ===========================================================================
 template EquityInstrument
   with
-    issuer   : Party
-    ticker   : Text
-    name     : Text
+    issuer      : Party
+    ticker      : Text
+    name        : Text
     description : Text
   where
     signatory issuer
@@ -14,56 +59,133 @@ template EquityInstrument
     key (issuer, ticker) : (Party, Text)
     maintainer key._1
 
-    -- | Allowlist a party so they can receive holdings of this instrument.
-    nonconsuming choice AllowlistParty : ContractId AllowlistEntry
+    -- | Launch an IPO offering for this instrument. Only the issuer may do so.
+    nonconsuming choice LaunchOffering : ContractId Offering
       with
-        party : Party
+        investors           : [Party]
+        priceTalk           : Text
+        offeringDescription : Text
       controller issuer
       do
-        create AllowlistEntry with
+        create Offering with
           issuer
+          investors
           ticker
-          party
+          priceTalk
+          description = offeringDescription
 
-    -- | Mint a specified number of shares to an allowlisted party.
-    nonconsuming choice MintShares : ContractId EquityHolding
-      with
-        recipient  : Party
-        amount     : Decimal
-        allowlistCid : ContractId AllowlistEntry
-      controller issuer
-      do
-        -- Verify the allowlist entry belongs to this issuer/ticker/party
-        entry <- fetch allowlistCid
-        assert (entry.issuer == issuer)
-        assert (entry.ticker == ticker)
-        assert (entry.party  == recipient)
-        assert (amount > 0.0)
-        create EquityHolding with
-          issuer
-          owner  = recipient
-          ticker
-          amount
-
--- | A permission record authorizing a party to hold shares of a given instrument.
-template AllowlistEntry
+-- ===========================================================================
+-- Offering — a live IPO that allowlisted investors can subscribe to.
+-- ===========================================================================
+template Offering
   with
-    issuer : Party
-    ticker : Text
-    party  : Party
+    issuer      : Party
+    investors   : [Party]
+    ticker      : Text
+    priceTalk   : Text
+    description : Text
   where
     signatory issuer
-    observer party
+    observer investors
 
-    key (issuer, ticker, party) : (Party, Text, Party)
-    maintainer key._1
+    -- | An investor places an Indication of Interest (IOI), escrowing
+    --   (maxPrice * sharesDesired) USDC. Any change is returned immediately.
+    nonconsuming choice PlaceIOI : ContractId IOI
+      with
+        investor      : Party
+        usdcCid       : ContractId UsdcHolding
+        maxPrice      : Decimal
+        sharesDesired : Decimal
+      controller investor
+      do
+        assert (investor `elem` investors)
+        assert (maxPrice > 0.0 && sharesDesired > 0.0)
+        holding <- fetch usdcCid
+        assert (holding.owner == investor)
+        assert (holding.issuer == issuer)
+        let cost = maxPrice * sharesDesired
+        assert (holding.amount >= cost)
+        archive usdcCid
+        -- Return change (escrow only the exact cost).
+        when (holding.amount > cost) $ void $
+          create UsdcHolding with
+            issuer
+            owner = investor
+            amount = holding.amount - cost
+        create IOI with
+          issuer
+          investor
+          ticker
+          maxPrice
+          sharesDesired
+          escrowed = cost
 
-    -- | Issuer can revoke allowlist status.
-    choice RevokeAllowlist : ()
+-- | Result of an allocation: references to the contracts created.
+data AllocationResult = AllocationResult
+  with
+    sharesCid  : Optional (ContractId EquityHolding)
+    refundCid  : Optional (ContractId UsdcHolding)
+    proceedCid : Optional (ContractId UsdcHolding)
+  deriving (Eq, Show)
+
+-- ===========================================================================
+-- IOI — an investor's bid: settles pay-as-bid at the investor's max price.
+-- ===========================================================================
+template IOI
+  with
+    issuer        : Party
+    investor      : Party
+    ticker        : Text
+    maxPrice      : Decimal
+    sharesDesired : Decimal
+    escrowed      : Decimal
+  where
+    signatory issuer
+    observer investor
+
+    -- | Issuer allocates 0..sharesDesired shares at a single clearing
+    --   `dealPrice` (the same price for every investor). The order is only
+    --   eligible if its `maxPrice` is at or above the deal price. Shares are
+    --   minted to the investor, proceeds (shares * dealPrice) go to the
+    --   issuer's wallet, and any unspent escrow is refunded to the investor.
+    choice Allocate : AllocationResult
+      with
+        dealPrice        : Decimal
+        sharesToAllocate : Decimal
       controller issuer
-      do return ()
+      do
+        assert (sharesToAllocate >= 0.0 && sharesToAllocate <= sharesDesired)
+        assert (dealPrice > 0.0)
+        -- Only fill orders whose max price meets the clearing price.
+        assert (dealPrice <= maxPrice)
+        let proceeds = sharesToAllocate * dealPrice
+        let refund   = escrowed - proceeds
+        sharesCid <-
+          if sharesToAllocate > 0.0
+            then fmap Some $ create EquityHolding with
+                   issuer; owner = investor; ticker; amount = sharesToAllocate
+            else pure None
+        refundCid <-
+          if refund > 0.0
+            then fmap Some $ create UsdcHolding with
+                   issuer; owner = investor; amount = refund
+            else pure None
+        proceedCid <-
+          if proceeds > 0.0
+            then fmap Some $ create UsdcHolding with
+                   issuer; owner = issuer; amount = proceeds
+            else pure None
+        pure AllocationResult with sharesCid; refundCid; proceedCid
 
--- | Represents shares of a tokenized equity held by a party.
+    -- | Investor withdraws their IOI before allocation and reclaims escrow.
+    choice CancelIOI : ContractId UsdcHolding
+      controller investor
+      do
+        create UsdcHolding with issuer; owner = investor; amount = escrowed
+
+-- ===========================================================================
+-- EquityHolding — shares of a tokenized equity held by a party.
+-- ===========================================================================
 template EquityHolding
   with
     issuer : Party
@@ -74,7 +196,7 @@ template EquityHolding
     signatory issuer
     observer owner
 
-    -- | Allows the issuer to merge two holdings into one.
+    -- | Issuer merges two holdings into one.
     choice Merge : ContractId EquityHolding
       with
         otherCid : ContractId EquityHolding
@@ -87,7 +209,7 @@ template EquityHolding
         archive otherCid
         create this with amount = amount + other.amount
 
-    -- | Allows the issuer to burn / redeem shares.
+    -- | Issuer burns / redeems shares.
     choice Burn : ()
       controller issuer
       do return ()

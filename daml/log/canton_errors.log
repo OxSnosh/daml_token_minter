@@ -2,3 +2,5 @@
 2026-06-19 14:18:28,446 [main] ERROR c.d.c.e.CommunityEnvironment tid:1154424ccc5565caa3addb6e6ac2098f - Failed to start local: Failed to bind to address /127.0.0.1:6868
 2026-06-19 14:27:27,710 [main] INFO  c.d.c.e.CommunityEnvironment tid:644b632db241751f66584778d625a4bf - Automatically starting all instances
 2026-06-19 14:27:29,729 [main] ERROR c.d.c.e.CommunityEnvironment tid:644b632db241751f66584778d625a4bf - Failed to start local: Failed to bind to address /127.0.0.1:6868
+2026-06-19 18:32:12,532 [main] INFO  c.d.c.e.CommunityEnvironment tid:7a1e1e1106769ad1c0448ab346f3a9fe - Automatically starting all instances
+2026-06-19 18:32:14,912 [main] ERROR c.d.c.e.CommunityEnvironment tid:7a1e1e1106769ad1c0448ab346f3a9fe - Failed to start local: Failed to bind to address /127.0.0.1:6868

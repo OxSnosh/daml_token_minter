@@ -72,3 +72,5 @@
 34. "this is what im getting now — Error: Unknown option --allow-insecure-tokens (when passed via --json-api-option)"
 
 35. "i am getting this error now — HTTP 401 Unauthorized (json-api running but rejecting devToken)"
+
+36. "why am i getting this error when i click on create instrument? HTTP 401 Unauthorized" (root cause: token missing ledgerId claim; fixed by adding ledgerId: 'sandbox')

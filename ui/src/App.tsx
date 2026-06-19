@@ -17,6 +17,7 @@ function devToken(party: string): string {
     const header = b64url({ alg: 'HS256', typ: 'JWT' })
     const payload = b64url({
         'https://daml.com/ledger-api': {
+            ledgerId: 'sandbox',
             actAs: [party],
             readAs: [party],
             applicationId: 'spcx-app',

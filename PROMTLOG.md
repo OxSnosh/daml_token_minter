@@ -48,7 +48,6 @@
 
 23. "it still says sandbox not running"
 
-
 24. "did i need to run daml install latest?"
 
 25. "i have 3.4.11 running can you please take me back to 2.10.4"
@@ -88,3 +87,11 @@
 42. "i am getting this error in the console — Uncaught TypeError: Cannot read properties of undefined (reading 'templateId') at ledger.ts:56:48"
 
 43. "This is great! When it comes time to allocate a deal I need the issuer to be able to specify a deal price (the same price for everyone) and allocate at the price only to orders with a max price above the deal price"
+
+44. "what is the difference between daml build and daml codegen. please update the prompt log"
+
+45. "does daml build automatically deploy it?"
+
+46. "how do i deploy to the canton network"
+
+47. "can you please explain the key differences between the ETH and EVM and the canton according to the whitepaper here https://www.canton.io/publications/canton-whitepaper.pdf"
